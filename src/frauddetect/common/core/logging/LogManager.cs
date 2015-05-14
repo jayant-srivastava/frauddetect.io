@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace frauddetect.common.core.logging
 {
-    sealed class Logger
+    public sealed class LogManager
     {
         private bool IsInitialized;
         private Object Lock = new Object();
@@ -18,17 +18,17 @@ namespace frauddetect.common.core.logging
         {
             if(string.IsNullOrWhiteSpace(applicationName))
             {
-                throw new Exception("Application name is empty.");
+                throw new ArgumentException("Application name is empty.");
             }
 
             if(string.IsNullOrWhiteSpace(configFilePath))
             {
-                throw new Exception("Configuration file path is empty.");
+                throw new ArgumentException("Configuration file path is empty.");
             }
 
             if(!File.Exists(configFilePath))
             {
-                throw new Exception("Configuration file doesn't exist.");
+                throw new FileNotFoundException("Configuration file doesn't exist.");
             }
 
             if (IsInitialized)
@@ -38,6 +38,11 @@ namespace frauddetect.common.core.logging
 
             lock (Lock)
             {
+                if(IsInitialized)
+                {
+                    return;
+                }
+
                 XmlConfigurator.Configure();
                 GlobalContext.Properties["ApplicationName"] = applicationName;
 
@@ -54,7 +59,7 @@ namespace frauddetect.common.core.logging
                 throw new Exception("Logger isn't initialized.");
             }
 
-            return LogManager.GetLogger(T);
+            return log4net.LogManager.GetLogger(T);
         }
     }
 }

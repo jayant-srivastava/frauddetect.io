@@ -44,3 +44,10 @@ Temporary Items
 
 # Temporary project files
 *.suo
+
+#Ignore directories
+obj/
+binaries/*.dll
+binaries/*.pdb
+binaries/debug/*.dll
+binaries/debug/*.pdb

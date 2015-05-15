@@ -44,10 +44,15 @@ Temporary Items
 
 # Temporary project files
 *.suo
+*.csproj.user
+*.sln
 
 #Ignore directories
 obj/
+bin/
 binaries/*.dll
 binaries/*.pdb
+binaries/*.config
 binaries/debug/*.dll
 binaries/debug/*.pdb
+binaries/debug/*.config

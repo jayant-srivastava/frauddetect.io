@@ -16,32 +16,16 @@ namespace frauddetect.common.core.logging
 
         public void Initialize(string applicationName, string configFilePath)
         {
-            if(string.IsNullOrWhiteSpace(applicationName))
-            {
-                throw new ArgumentException("Application name is empty.");
-            }
+            if (string.IsNullOrWhiteSpace(applicationName)) { throw new ArgumentException("Application name is empty."); }
+            if (string.IsNullOrWhiteSpace(configFilePath)) { throw new ArgumentException("Configuration file path is empty."); }
 
-            if(string.IsNullOrWhiteSpace(configFilePath))
-            {
-                throw new ArgumentException("Configuration file path is empty.");
-            }
+            if (!File.Exists(configFilePath)) { throw new FileNotFoundException("Configuration file doesn't exist."); }
 
-            if(!File.Exists(configFilePath))
-            {
-                throw new FileNotFoundException("Configuration file doesn't exist.");
-            }
-
-            if (IsInitialized)
-            {
-                return;
-            }
+            if (IsInitialized) { return; }
 
             lock (Lock)
             {
-                if(IsInitialized)
-                {
-                    return;
-                }
+                if (IsInitialized) { return; }
 
                 XmlConfigurator.Configure();
                 GlobalContext.Properties["ApplicationName"] = applicationName;
@@ -54,10 +38,7 @@ namespace frauddetect.common.core.logging
 
         public ILog GetLogger(Type T)
         {
-            if (IsInitialized == false)
-            {
-                throw new Exception("Logger isn't initialized.");
-            }
+            if (IsInitialized == false) { throw new Exception("Logger isn't initialized."); }
 
             return log4net.LogManager.GetLogger(T);
         }

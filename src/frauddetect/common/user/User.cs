@@ -30,5 +30,7 @@ namespace frauddetect.common.user
         public string BillingCountry { get; set; }
 
         public string DOB { get; set; }
+
+        public bool Active { get; set; }
     }
 }

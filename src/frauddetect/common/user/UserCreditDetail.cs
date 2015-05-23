@@ -7,13 +7,17 @@ using System.Threading.Tasks;
 namespace frauddetect.common.user
 {
     [Serializable]
-    public class UserCreditDetails
+    public class UserCreditDetail
     {
-        public string UserId { get; set; }
+        public string PrimaryUserId { get; set; }
+        public string SecondaryUserId { get; set; }
         public string Account { get; set; }
         public int ExpiryYear { get; set; }
         public int ExpiryMonth { get; set; }
         public int CVV { get; set; }
-        public CreditType CreditType { get; set; }
+        public CreditCardType CreditType { get; set; }
+        public bool Active { get; set; }
+        public double Limit { get; set; }
+        public double Balance { get; set; }
     }
 }

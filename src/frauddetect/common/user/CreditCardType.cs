@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace frauddetect.common.user
 {
     [Serializable]
-    public enum CreditType
+    public enum CreditCardType
     {
         Visa,
         MasterCard,

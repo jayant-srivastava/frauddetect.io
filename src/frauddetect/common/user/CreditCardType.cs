@@ -12,5 +12,6 @@ namespace frauddetect.common.user
         Visa,
         MasterCard,
         Discover,
+        Amex,
     }
 }

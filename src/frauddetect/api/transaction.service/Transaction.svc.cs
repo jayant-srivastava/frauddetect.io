@@ -74,7 +74,8 @@ namespace transaction.service
                 transactionId = Guid.NewGuid();
 
                 //log authorization request
-                Logger.Debug(string.Format("Transaction Id [{0}] - AccountNumber: {1}, AccountName:{2}, Ammount: {3}, Store: {4}", transactionId, transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
+                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Ammount : {4}, Store : {5} ]]",
+                    transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Verifying), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
 
                 #region Validate other input parameters
 
@@ -91,7 +92,8 @@ namespace transaction.service
                 if (transactionInput.ExpiryMonth > 12 || transactionInput.ExpiryMonth < 1) { statusCode = StatusCode.InvalidExpiryMonth; throw new ArgumentException("Expiry month isn't valid."); }
 
                 //fail authorization if CVV is empty
-                if(transactionInput.CVV == 0) { statusCode = StatusCode.InvalidCVV; throw new ArgumentException("CVV isn't valid."); }
+                if (transactionInput.CVV == 0) { statusCode = StatusCode.InvalidCVV; throw new ArgumentException("CVV isn't valid."); }
+
                 #endregion
 
                 #region Validate credit card is valid
@@ -122,25 +124,36 @@ namespace transaction.service
                 UserManager userManager = new UserManager();
                 userManager.Initialize(MongoDb);
 
-                User user = null;
-                user = userManager.GetById(new ObjectId(userCreditDetail.PrimaryUserId));
-                if (user == null) { user = userManager.GetById(new ObjectId(userCreditDetail.SecondaryUserId)); }
+                User primaryUser = string.IsNullOrWhiteSpace(userCreditDetail.PrimaryUserId) ? null : userManager.GetById(new ObjectId(userCreditDetail.PrimaryUserId));
+                User secondaryUser = string.IsNullOrWhiteSpace(userCreditDetail.SecondaryUserId) ? null : userManager.GetById(new ObjectId(userCreditDetail.SecondaryUserId));
 
-                //fail authorization if primary and secondary user details don't exist
-                if (user == null) { statusCode = StatusCode.InvalidUser; throw new Exception("User doesn't exist."); }
+                //fail authorization if primary and secondary user details don't exist or match
+                if (primaryUser == null && secondaryUser == null) { statusCode = StatusCode.InvalidUser; throw new Exception("User doesn't exist."); }
+
+                User user = null;
+                if (primaryUser != null && string.Compare(primaryUser.FirstName + " " + primaryUser.LastName, transactionInput.AccountName) == 0)
+                {
+                    user = primaryUser;
+                }
+                else if (secondaryUser != null && string.Compare(secondaryUser.FirstName + " " + secondaryUser.LastName, transactionInput.AccountName) == 0)
+                {
+                    user = secondaryUser;
+                }
+
+                if (user == null) { statusCode = StatusCode.InvalidUser; throw new Exception("User details doesn't match."); }
 
                 //fail authorization if user is inactive
                 if (!user.Active) { statusCode = StatusCode.InvalidUserIsInActive; throw new Exception("User is inactive."); }
 
-                if(string.Compare(user.FirstName + " " + user.LastName, transactionInput.AccountName) != 0) { statusCode = StatusCode.InvalidUser; throw new Exception("User doesn't match."); }
-
                 #endregion
 
+                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Ammount : {4}, Store : {5} ]]",
+                   transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Success), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
                 return new TransactionOutput() { Success = true, AuthorizationCode = transactionId.ToString(), StatusCode = StatusCode.Success, Message = string.Empty };
             }
             catch (Exception ex)
             {
-                if (Logger != null) { Logger.Error(string.Format("Transaction Id [{0}] - AccountNumber: {1}, StatusCode: {2}. Authorization failed.", transactionId, accountNumber, statusCode), ex); }
+                if (Logger != null) { Logger.Error(string.Format("[Transaction Id : {0}, Status Code: {1}, Account Details : [ AccountNumber: {2} ], Message: {3}]", transactionId, Enum.GetName(typeof(StatusCode), statusCode), accountNumber, ex.Message)); }
                 return new TransactionOutput() { Success = false, AuthorizationCode = string.Empty, StatusCode = StatusCode.Failed, Message = "Transaction failed." };
             }
         }

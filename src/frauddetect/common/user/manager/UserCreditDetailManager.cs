@@ -54,7 +54,7 @@ namespace frauddetect.common.user.manager
             if (string.IsNullOrWhiteSpace(account)) { throw new ArgumentNullException("Account number is blank."); }
 
             List<UserCreditDetail> userCreditDetails = UserCreditDetailsCollection.Find(Query<UserCreditDetail>.EQ(u => u.Account, account)).SetFields(Fields.Exclude("_id")).ToList();
-            if (userCreditDetails == null || userCreditDetails.Count != 1) { throw new Exception("User credid detail doesn't exist."); }
+            if (userCreditDetails == null || userCreditDetails.Count == 0) { return null; }
 
             return userCreditDetails[0];
         }

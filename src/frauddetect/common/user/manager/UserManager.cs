@@ -86,7 +86,7 @@ namespace frauddetect.common.user.manager
             if (id == null) { throw new ArgumentNullException("Id is null."); }
 
             List<User> users = UserCollection.Find(Query<User>.EQ(u => u.ID, id)).ToList();
-            if (users == null || users.Count != 1) { throw new Exception("User doesn't exist."); }
+            if (users == null || users.Count == 0) { return null; }
 
             return users[0];
         }

@@ -67,11 +67,11 @@ namespace transaction.service
     [Serializable]
     public enum StatusCode
     {
+        Verifying = -1,
         Failed = 100,
 
         InvalidUser = 200,
         InvalidUserIsInActive = 201,
-
 
         InvalidAccountNumber = 301,
         InvalidAccountName = 302,

@@ -1,6 +1,10 @@
 ﻿using frauddetect.common.core.logging;
+using frauddetect.common.user;
+using frauddetect.common.user.manager;
+using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -14,23 +18,27 @@ namespace transaction.service
     {
         #region Private variables
 
-        private readonly log4net.ILog _logger;
-        private const string APPLICATIONNAME = "transaction.service";
-        private const string LOGCONFIG = @"C:\frauddetect.io\support\configuration\logging.config";
-        private readonly bool _initialized = false;
+        private static readonly log4net.ILog Logger;
+        private const string ApplicationName = "transaction.service";
+        private const string LoggerConfigFile = @"C:\frauddetect.io\support\configuration\logging.config";
+        private static readonly bool Initialized = false;
+        private static string MongoDb;
 
         #endregion
 
         #region Constructor
 
-        Transaction()
+        static Transaction()
         {
             try
             {
                 LogManager logManager = new LogManager();
-                logManager.Initialize(APPLICATIONNAME, LOGCONFIG);
-                _logger = logManager.GetLogger(typeof(Transaction));
-                _initialized = true;
+                logManager.Initialize(ApplicationName, LoggerConfigFile);
+                Logger = logManager.GetLogger(typeof(Transaction));
+
+                MongoDb = ConfigurationManager.AppSettings["MongoDB"];
+                
+                Initialized = true;
             }
             catch(Exception)
             {
@@ -43,75 +51,121 @@ namespace transaction.service
 
         public TransactionOutput Authorize(TransactionInput transactionInput)
         {
-            if (_logger != null)
-            {
-                _logger.Debug("START: Authorize()");
-            }
+            Guid transactionId = Guid.Empty;
+            StatusCode statusCode = StatusCode.Failed;
+            string accountNumber = string.Empty;
 
             try
             {
-                if(!_initialized)
-                {
-                    throw new Exception("Service isn't initialized.");
-                }
+                IsInitialized();
 
-                if (_logger != null)
-                {
-                    _logger.Debug(string.Format("Account: {0}, Ammount: {1}, Store: {2}", transactionInput.Account, transactionInput.Amount, transactionInput.Store));
-                }
+                #region Validate input != null && Account# != null
 
-                return new TransactionOutput() { Success = true, AuthorizationCode = "100", StatusCode = 0, Message = string.Empty };
+                //reject request if input is null
+                if (transactionInput == null) { throw new ArgumentNullException("Transaction input is null."); }
+
+                //reject request if account number is null
+                if (string.IsNullOrWhiteSpace(transactionInput.AccountNumber)) { statusCode = StatusCode.InvalidAccountNumber; throw new ArgumentException("Account number is blank."); }
+                accountNumber = transactionInput.AccountNumber;
+
+                #endregion
+
+                //generate transaction code
+                transactionId = Guid.NewGuid();
+
+                //log authorization request
+                Logger.Debug(string.Format("Transaction Id [{0}] - AccountNumber: {1}, AccountName:{2}, Ammount: {3}, Store: {4}", transactionId, transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
+
+                #region Validate other input parameters
+
+                //fail authorization if account name is blank
+                if (string.IsNullOrWhiteSpace(transactionInput.AccountName)) { statusCode = StatusCode.InvalidAccountNumber; throw new ArgumentException("Account name is blank."); }
+
+                //fail authorization if amount isn't > 0
+                if (transactionInput.Amount <= 0) { statusCode = StatusCode.InvalidAmount; throw new ArgumentException("Amount should be greater than 0."); }
+
+                //fail authorization if expiry year isn't valid
+                if (transactionInput.ExpiryYear < DateTime.Now.Year) { statusCode = StatusCode.InvalidExpiryYear; throw new ArgumentException("Expiry year isn't valid."); }
+
+                //fail authorization if expiry month isn't valid
+                if (transactionInput.ExpiryMonth > 12 || transactionInput.ExpiryMonth < 1) { statusCode = StatusCode.InvalidExpiryMonth; throw new ArgumentException("Expiry month isn't valid."); }
+
+                //fail authorization if CVV is empty
+                if(transactionInput.CVV == 0) { statusCode = StatusCode.InvalidCVV; throw new ArgumentException("CVV isn't valid."); }
+                #endregion
+
+                #region Validate credit card is valid
+
+                //validate credit card and amount balance
+                UserCreditDetailManager userCreditDetailManager = new UserCreditDetailManager();
+                userCreditDetailManager.Initialize(MongoDb);
+
+                UserCreditDetail userCreditDetail = userCreditDetailManager.GetByAccount(transactionInput.AccountNumber);
+
+                //fail authorization if account is inactive
+                if (!userCreditDetail.Active) { statusCode = StatusCode.InvalidAccountInActive; throw new Exception("Account is inactive."); }
+
+                //fail authorization if expiry year don't match
+                if (userCreditDetail.ExpiryYear != transactionInput.ExpiryYear) { statusCode = StatusCode.InvalidExpiryYear; throw new Exception("Expiry year doesn't match."); }
+
+                //fail authorization if expiry month don't match
+                if (userCreditDetail.ExpiryMonth != transactionInput.ExpiryMonth) { statusCode = StatusCode.InvalidExpiryMonth; throw new Exception("Expiry month doesn't match."); }
+
+                //fail authorization if CVV don't match
+                if (userCreditDetail.CVV != transactionInput.CVV) { statusCode = StatusCode.InvalidCVV; throw new Exception("CVV doesn't match."); }
+
+                #endregion
+
+                #region Validate user is valid
+
+                //validate user details
+                UserManager userManager = new UserManager();
+                userManager.Initialize(MongoDb);
+
+                User user = null;
+                user = userManager.GetById(new ObjectId(userCreditDetail.PrimaryUserId));
+                if (user == null) { user = userManager.GetById(new ObjectId(userCreditDetail.SecondaryUserId)); }
+
+                //fail authorization if primary and secondary user details don't exist
+                if (user == null) { statusCode = StatusCode.InvalidUser; throw new Exception("User doesn't exist."); }
+
+                //fail authorization if user is inactive
+                if (!user.Active) { statusCode = StatusCode.InvalidUserIsInActive; throw new Exception("User is inactive."); }
+
+                if(string.Compare(user.FirstName + " " + user.LastName, transactionInput.AccountName) != 0) { statusCode = StatusCode.InvalidUser; throw new Exception("User doesn't match."); }
+
+                #endregion
+
+                return new TransactionOutput() { Success = true, AuthorizationCode = transactionId.ToString(), StatusCode = StatusCode.Success, Message = string.Empty };
             }
             catch (Exception ex)
             {
-                if (_logger != null)
-                {
-                    _logger.Error("EXCEPTION: Authorize()", ex);
-                }
-
-                return new TransactionOutput() { Success = false, AuthorizationCode = string.Empty, StatusCode = -1, Message = ex.Message };
-            }
-            finally
-            {
-                if (_logger != null)
-                {
-                    _logger.Debug("END: Authorize()");
-                }
+                if (Logger != null) { Logger.Error(string.Format("Transaction Id [{0}] - AccountNumber: {1}, StatusCode: {2}. Authorization failed.", transactionId, accountNumber, statusCode), ex); }
+                return new TransactionOutput() { Success = false, AuthorizationCode = string.Empty, StatusCode = StatusCode.Failed, Message = "Transaction failed." };
             }
         }
 
         public bool Health()
         {
-            if (_logger != null)
-            {
-                _logger.Debug("START: Health()");
-            }
-
             try
             {
-                if (!_initialized)
-                {
-                    throw new Exception("Service isn't initialized.");
-                }
-
+                IsInitialized();
                 return true;
             }
             catch (Exception ex)
             {
-                if (_logger != null)
-                {
-                    _logger.Error("EXCEPTION: Health()", ex);
-                }
-
+                if (Logger != null) { Logger.Info("EXCEPTION: Health()", ex); }
                 return false;
             }
-            finally
-            {
-                if (_logger != null)
-                {
-                    _logger.Debug("END: Health()");
-                }
-            }
+        }
+
+        #endregion
+
+        #region Private functions
+
+        private static void IsInitialized()
+        {
+            if (!Initialized) { throw new Exception("Service isn't initialized."); }
         }
 
         #endregion

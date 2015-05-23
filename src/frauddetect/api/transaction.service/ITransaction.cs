@@ -25,7 +25,19 @@ namespace transaction.service
     public class TransactionInput
     {
         [DataMember]
-        public string Account { get; set; }
+        public string AccountNumber { get; set; }
+
+        [DataMember]
+        public string AccountName { get; set; }
+
+        [DataMember]
+        public int ExpiryMonth { get; set; }
+
+        [DataMember]
+        public int ExpiryYear { get; set; }
+
+        [DataMember]
+        public int CVV { get; set; }
 
         [DataMember]
         public string Store { get; set; }
@@ -45,9 +57,30 @@ namespace transaction.service
         public string Message { get; set; }
 
         [DataMember]
-        public int StatusCode { get; set; }
+        public StatusCode StatusCode { get; set; }
 
         [DataMember]
         public string AuthorizationCode { get; set; }
+    }
+
+    [DataContract]
+    [Serializable]
+    public enum StatusCode
+    {
+        Failed = 100,
+
+        InvalidUser = 200,
+        InvalidUserIsInActive = 201,
+
+
+        InvalidAccountNumber = 301,
+        InvalidAccountName = 302,
+        InvalidAmount = 303,
+        InvalidExpiryYear = 304,
+        InvalidExpiryMonth = 305,
+        InvalidCVV = 306,
+        InvalidAccountInActive = 307,
+
+        Success = 0,
     }
 }

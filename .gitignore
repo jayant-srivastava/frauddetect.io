@@ -56,3 +56,4 @@ binaries/*.config
 binaries/debug/*.dll
 binaries/debug/*.pdb
 binaries/debug/*.config
+.vs/

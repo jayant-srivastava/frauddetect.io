@@ -12,14 +12,14 @@ namespace frauddetect.unittests
         [ExpectedException(typeof(ArgumentException))]
         public void LogManager_Initialize_ApplicationName_IsNull()
         {
-            new LogManager().Initialize(null, @"C:\frauddetect.io\support\configuration\logging.config");
+            new LogManager().Initialize(null, @"C:\Projects\frauddetect.io\deployment\configuration\logging.config");
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void LogManager_Initialize_ApplicationName_IsEmptyString()
         {
-            new LogManager().Initialize(string.Empty, @"C:\frauddetect.io\support\configuration\logging.config");
+            new LogManager().Initialize(string.Empty, @"C:\Projects\frauddetect.io\deployment\configuration\logging.config");
         }
 
         [TestMethod]

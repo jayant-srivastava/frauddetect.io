@@ -31,6 +31,8 @@ namespace sample.windows
                 string lastName = string.Format("Doe {0}", random);
                 string SSN = random.ToString();
                 string accountNumber = string.Format("1111111{0}", random);
+                string email = string.Format("{0}.gmail.com", random);
+                string phone = random.ToString();
 
                 #endregion
 
@@ -44,6 +46,8 @@ namespace sample.windows
                     LastName = lastName,
                     Active = true,
                     SSN = SSN,
+                    EmailAddress = email,
+                    Phone = phone,
                 };
 
                 UserManager userManager = new UserManager();

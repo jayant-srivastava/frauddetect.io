@@ -58,6 +58,9 @@ namespace sample.windows
 
                 #endregion
 
+                #region Update User
+                #endregion
+
                 #region Create credit card detail
 
                 Console.WriteLine("Creating credit detail...");
@@ -84,7 +87,14 @@ namespace sample.windows
 
                 #endregion
 
-                #region Simulate transaction 
+                #region Update credit card detail
+
+                userCreditDetail.Balance = 1000;
+                userCreditDetailManager.Update(userCreditDetail);
+
+                #endregion
+
+                #region Simulate transaction
 
                 Console.WriteLine("Simulating transaction...");
 
@@ -109,6 +119,15 @@ namespace sample.windows
                     Console.WriteLine("Transaction failed.");
                 }
 
+                #endregion
+
+                #region Delete credit card detail
+
+                userCreditDetailManager.Delete(userCreditDetail);
+
+                #endregion
+
+                #region Delete user
                 #endregion
             }
             catch (Exception ex)

@@ -73,6 +73,7 @@ namespace transaction.service
         InvalidUser = 200,
         InvalidUserIsInActive = 201,
 
+        InvalidAccount = 300,
         InvalidAccountNumber = 301,
         InvalidAccountName = 302,
         InvalidAmount = 303,
@@ -80,6 +81,8 @@ namespace transaction.service
         InvalidExpiryMonth = 305,
         InvalidCVV = 306,
         InvalidAccountInActive = 307,
+
+        InsufficientFunds = 400,
 
         Success = 0,
     }

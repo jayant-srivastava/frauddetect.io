@@ -74,7 +74,7 @@ namespace transaction.service
                 transactionId = Guid.NewGuid();
 
                 //log authorization request
-                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Ammount : {4}, Store : {5} ]]",
+                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Amount : {4}, Store : {5} ]]",
                     transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Verifying), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
 
                 #region Validate other input parameters
@@ -103,6 +103,9 @@ namespace transaction.service
                 userCreditDetailManager.Initialize(MongoDb);
 
                 UserCreditDetail userCreditDetail = userCreditDetailManager.GetByAccount(transactionInput.AccountNumber);
+
+                //fail authorization if credit details don't exist
+                if (userCreditDetail == null) { statusCode = StatusCode.InvalidAccount; throw new Exception("Account is invalid."); }
 
                 //fail authorization if account is inactive
                 if (!userCreditDetail.Active) { statusCode = StatusCode.InvalidAccountInActive; throw new Exception("Account is inactive."); }
@@ -147,7 +150,17 @@ namespace transaction.service
 
                 #endregion
 
-                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Ammount : {4}, Store : {5} ]]",
+                #region Check amount vs balance
+
+                //fail authorization if balance - amount < 0
+                if (userCreditDetail.Balance - transactionInput.Amount < 0) { statusCode = StatusCode.InsufficientFunds; throw new Exception("Insufficent funds."); }
+
+                userCreditDetail.Balance = userCreditDetail.Balance - transactionInput.Amount;
+                //todo: update record
+
+                #endregion
+
+                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Amount : {4}, Store : {5} ]]",
                    transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Success), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
                 return new TransactionOutput() { Success = true, AuthorizationCode = transactionId.ToString(), StatusCode = StatusCode.Success, Message = string.Empty };
             }

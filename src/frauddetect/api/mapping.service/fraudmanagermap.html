@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Fraud Manager Application</title>
+   <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script>
+    $( document ).ready(function() {
+    	console.log("START: Call service and generate map");
+    	var response = "";
+
+        $.ajax({
+        	 type: "GET",
+			           url: "http://localhost/services/v1/fraud.service/Fraud.svc/fraud",
+			           contentType: "application/json; charset=utf-8",
+         			   dataType: "json",
+		            success: function (response) {
+		            	console.log("START: Process response");
+
+		            	console.log(response);
+		            	var obj = response.FraudDetailsResult;
+
+		            	jQuery.each(obj, function(index, value) {
+		            		console.log(value.Latitude);
+		            		console.log(value.Longitude);
+		            		console.log(value.Amount);
+		            	});
+
+		            	console.log("END: Process response");
+
+		            	console.log("START: CREATE map");
+
+                        L.mapbox.accessToken = 'pk.eyJ1IjoiamF5YW50cyIsImEiOiIzNzY5ODQ4MmI4Mjc2ZWY5YTlmMjFkNDA2Y2NlYWRlYSJ9.BVkJt6_ouAGUD5U_4Z1RfQ';
+                        var map = L.mapbox.map('map', 'mapbox.streets').setView([37.58, -121.98], 4);
+
+                        var markers = new L.MarkerClusterGroup();
+
+                		jQuery.each(obj, function(index, value) {
+    						console.log(value.Latitude);
+					        console.log(value.Longitude);
+		            		console.log(value.Amount);
+
+			        		var title = value.Amount;
+			        		var marker = L.marker(new L.LatLng(value.Latitude, value.Longitude), {
+			            		icon: L.mapbox.marker.icon({'marker-symbol': 'post', 'marker-color': '0044FF'}),
+			            		title: title
+			        		});
+
+			        	    marker.bindPopup(title);
+			        	    markers.addLayer(marker);
+    		            });
+
+                		map.addLayer(markers);
+		                console.log("END: CREATE map");
+		            },
+		            error: function (error) {
+		                alert("Error");
+            }
+        });
+
+        console.log("END: Call service and generate map");
+    });
+    </script>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.css' rel='stylesheet' />
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+    <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/leaflet.markercluster.js' ></script>
+    <link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.css' rel='stylesheet' />
+    <link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.Default.css' rel='stylesheet' />
+    <div id='map' />
+</body>
+</html>

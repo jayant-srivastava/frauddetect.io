@@ -1,0 +1,1 @@
+<%@ ServiceHost Language="C#" Debug="true" Service="frauddetect.api.fraud.service.Fraud" CodeBehind="Fraud.svc.cs" %>

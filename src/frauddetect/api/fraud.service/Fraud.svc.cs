@@ -14,7 +14,7 @@ namespace frauddetect.api.fraud.service
 {
     public class Fraud : IFraud
     {
-        public List<FraudOutput> FraudDetails()
+        public List<FraudOutput> FraudDetails(int months = 0)
         {
             Service splunkService = null;
 
@@ -35,10 +35,13 @@ namespace frauddetect.api.fraud.service
 
                 #region Create Job parameters
 
+                DateTime LatestTime = DateTime.UtcNow;
+                DateTime EarliestTime = (months > 0) ? LatestTime.AddMonths(-months) : LatestTime.AddDays(-1);
+
                 JobArgs jobArgs = new JobArgs()
                 {
-                    EarliestTime = "2015-06-014T12:00:00.000-07:00",
-                    LatestTime = "2015-06-20T12:00:00.000-07:00",
+                    EarliestTime = EarliestTime.ToString("yyyy-MM-ddT12:00:00.000-07:00"),
+                    LatestTime = LatestTime.ToString("yyyy-MM-ddT12:00:00.000-07:00"),
                 };
 
                 jobArgs.ExecutionMode = JobArgs.ExecutionModeEnum.Normal;
@@ -57,6 +60,7 @@ namespace frauddetect.api.fraud.service
                     }
                     catch (ThreadInterruptedException e)
                     {
+                        Trace.WriteLine(e.Message);
                         throw new Exception("Job failed.", e.InnerException);
                     }
                 }
@@ -107,7 +111,7 @@ namespace frauddetect.api.fraud.service
             }
             catch(Exception ex)
             {
-                //log exception
+                Trace.WriteLine(ex.Message);
                 return new List<FraudOutput>();
             }
             finally

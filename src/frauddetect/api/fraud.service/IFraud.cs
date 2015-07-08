@@ -11,9 +11,9 @@ namespace frauddetect.api.fraud.service
     [ServiceContract]
     public interface IFraud
     {
-        [WebGet(UriTemplate = "/fraud", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
+        [WebGet(UriTemplate = "/fraud?months={months}", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         [OperationContract]
-        List<FraudOutput> FraudDetails();  
+        List<FraudOutput> FraudDetails(int months = 0);  
     }
 
     [DataContract]

@@ -1,17 +1,33 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset=utf-8 />
 <title>Fraud Manager Application</title>
    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script>
+    $.urlParam = function(name){
+	    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+	    if (results==null){
+	       return null;
+	    }
+	    else{
+	       return results[1] || 0;
+	    }
+	};
+
     $( document ).ready(function() {
     	console.log("START: Call service and generate map");
     	var response = "";
 
+		var month = $.urlParam('month');
+		if(month == null)
+		{
+			month = 0;
+		}
+
         $.ajax({
         	 type: "GET",
-			           url: "http://localhost/services/v1/fraud.service/Fraud.svc/fraud",
+			           url: "http://localhost/services/v1/fraud.service/Fraud.svc/fraud?months=" + month,
 			           contentType: "application/json; charset=utf-8",
          			   dataType: "json",
 		            success: function (response) {

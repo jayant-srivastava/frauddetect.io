@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="frauddetect.api.transaction.service">
+      <HintPath>..\..\..\..\binaries\frauddetect.api.transaction.service.dll</HintPath>
+    </Reference>
     <Reference Include="frauddetect.common.core">
       <HintPath>..\..\..\..\binaries\frauddetect.common.core.dll</HintPath>
     </Reference>
@@ -55,9 +58,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="transaction.service">
-      <HintPath>..\..\..\..\binaries\transaction.service.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />

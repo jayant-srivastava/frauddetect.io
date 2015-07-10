@@ -35,6 +35,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="frauddetect.api.transaction.service, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\binaries\frauddetect.api.transaction.service.dll</HintPath>
+    </Reference>
     <Reference Include="frauddetect.common.core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\binaries\frauddetect.common.core.dll</HintPath>
@@ -56,10 +60,6 @@
       <HintPath>..\..\third_party\mongodb\MongoDB.Driver.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="transaction.service, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\binaries\transaction.service.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">

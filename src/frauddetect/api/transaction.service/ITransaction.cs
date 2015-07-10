@@ -6,7 +6,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
 
-namespace transaction.service
+namespace frauddetect.api.transaction.service
 {
     [ServiceContract]
     public interface ITransaction
@@ -44,6 +44,12 @@ namespace transaction.service
 
         [DataMember]
         public double Amount { get; set; }
+
+        [DataMember]
+        public double Latitude { get; set; }
+
+        [DataMember]
+        public double Longitude { get; set; }
     }
 
     [DataContract]

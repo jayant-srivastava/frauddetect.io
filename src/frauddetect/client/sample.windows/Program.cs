@@ -1,4 +1,5 @@
-﻿using frauddetect.common.core.logging;
+﻿using frauddetect.api.transaction.service;
+using frauddetect.common.core.logging;
 using frauddetect.common.core.web;
 using frauddetect.common.user;
 using frauddetect.common.user.manager;
@@ -13,7 +14,6 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using transaction.service;
 
 namespace sample.windows
 {
@@ -107,6 +107,8 @@ namespace sample.windows
                     CVV = 1111,
                     ExpiryMonth = 12,
                     ExpiryYear = 2016,
+                    Latitude = 37.773685,
+                    Longitude = -122.421034,
                 };
 
                 TransactionOutput output = new WebManager().POSTMethod<TransactionInput, TransactionOutput>(string.Format(@"http://{0}/services/v1/transaction.service/Transaction.svc/authorize", ConfigurationManager.AppSettings["webservice"]), input);

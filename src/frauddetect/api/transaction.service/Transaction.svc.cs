@@ -11,8 +11,9 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
+using System.Xml.Linq;
 
-namespace transaction.service
+namespace frauddetect.api.transaction.service
 {
     public class Transaction : ITransaction
     {
@@ -73,9 +74,14 @@ namespace transaction.service
                 //generate transaction code
                 transactionId = Guid.NewGuid();
 
+                #region Get Address details using Latitude and Longitude
+                Address address = GetAddress(transactionInput.Latitude, transactionInput.Longitude);
+
+                #endregion
+
                 //log authorization request
-                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Amount : {4}, Store : {5} ]]",
-                    transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Verifying), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
+                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Amount : {4} ], Store : [ StoreName : {5}, {6} ]]",
+                    transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Verifying), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store, address));
 
                 #region Validate other input parameters
 
@@ -160,8 +166,8 @@ namespace transaction.service
 
                 #endregion
 
-                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Amount : {4}, Store : {5} ]]",
-                   transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Success), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store));
+                Logger.Debug(string.Format("[Transaction Id : {0}, Status Code : {1}, Account Details : [ AccountNumber : {2}, AccountName : {3} , Amount : {4} ], Store : [ StoreName : {5}, {6} ]]",
+                   transactionId, Enum.GetName(typeof(StatusCode), StatusCode.Success), transactionInput.AccountNumber, transactionInput.AccountName, transactionInput.Amount, transactionInput.Store, address));
                 return new TransactionOutput() { Success = true, AuthorizationCode = transactionId.ToString(), StatusCode = StatusCode.Success, Message = string.Empty };
             }
             catch (Exception ex)
@@ -192,6 +198,64 @@ namespace transaction.service
         private static void IsInitialized()
         {
             if (!Initialized) { throw new Exception("Service isn't initialized."); }
+        }
+
+        private Address GetAddress(double latitude, double longitude)
+        {
+            XDocument xdoc = XDocument.Load(string.Format(@"http://maps.googleapis.com/maps/api/geocode/xml?latlng={0},{1}&sensor=false", latitude, longitude));
+
+            var status = (from s in xdoc.Descendants("GeocodeResponse").Descendants("status")
+                          select s).FirstOrDefault();
+
+            if (status == null || status.Value != "OK")
+            {
+                throw new Exception("Failed to retrieve address.");
+            }
+
+            var element = xdoc.Descendants("result").First().Descendants("address_component").Where(s => s.Descendants("type").First().Value == "route").FirstOrDefault();
+            var street = string.Empty;
+            if (element != null)
+            {
+                street = element.Descendants("long_name").First().Value;
+            }
+
+            element = xdoc.Descendants("result").First().Descendants("address_component").Where(s => s.Descendants("type").First().Value == "locality").FirstOrDefault();
+            var city = string.Empty;
+            if (element != null)
+            {
+                city = element.Descendants("long_name").First().Value;
+            }
+
+            element = xdoc.Descendants("result").First().Descendants("address_component").Where(s => s.Descendants("type").First().Value == "administrative_area_level_1").FirstOrDefault();
+            var state = string.Empty;
+            if (element != null)
+            {
+                state = element.Descendants("long_name").First().Value;
+            }
+
+            element = xdoc.Descendants("result").First().Descendants("address_component").Where(s => s.Descendants("type").First().Value == "postal_code").FirstOrDefault();
+            var postcode = string.Empty;
+            if (element != null)
+            {
+                postcode = element.Descendants("long_name").First().Value;
+            }
+
+            element = xdoc.Descendants("result").First().Descendants("address_component").Where(s => s.Descendants("type").First().Value == "country").FirstOrDefault();
+            var country = string.Empty;
+            if (element != null)
+            {
+                country = element.Descendants("long_name").First().Value;
+            }
+            return new Address()
+            {
+                Street = street,
+                City = city,
+                PostCode = postcode,
+                State = state,
+                Country = country,
+                Latitude = latitude,
+                Longitude = longitude,
+            };
         }
 
         #endregion

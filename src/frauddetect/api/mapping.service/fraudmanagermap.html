@@ -19,15 +19,15 @@
     	console.log("START: Call service and generate map");
     	var response = "";
 
-		var month = $.urlParam('month');
-		if(month == null)
+		var months = $.urlParam('months');
+		if(months == null)
 		{
-			month = 0;
+			months = 0;
 		}
 
         $.ajax({
         	 type: "GET",
-			           url: "http://localhost/services/v1/fraud.service/Fraud.svc/fraud?months=" + month,
+			           url: "http://localhost/services/v1/fraud.service/Fraud.svc/fraud?months=" + months,
 			           contentType: "application/json; charset=utf-8",
          			   dataType: "json",
 		            success: function (response) {

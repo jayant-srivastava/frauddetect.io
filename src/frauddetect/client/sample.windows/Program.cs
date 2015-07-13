@@ -40,9 +40,10 @@ namespace sample.windows
 
                 Console.WriteLine("Creating user...");
 
-                User user1 = new User
+                User user = new User
                 {
                     FirstName = firstName,
+                    MiddleName = string.Empty,
                     LastName = lastName,
                     Active = true,
                     SSN = SSN,
@@ -53,12 +54,16 @@ namespace sample.windows
                 UserManager userManager = new UserManager();
                 userManager.Initialize(ConfigurationManager.AppSettings["mongo"]);
 
-                ObjectId id = userManager.Insert(user1);
+                ObjectId id = userManager.Insert(user);
                 Console.WriteLine("Created user with Id: " + id);
 
                 #endregion
 
                 #region Update User
+
+                user.BillingZipCode = "94560";
+                userManager.Update(user);
+
                 #endregion
 
                 #region Create credit card detail
@@ -102,7 +107,7 @@ namespace sample.windows
                 {
                     AccountName = firstName + " " + lastName,
                     AccountNumber = accountNumber,
-                    Amount = 2.0,
+                    Amount = 20.0,
                     Store = "Macys",
                     CVV = 1111,
                     ExpiryMonth = 12,
@@ -125,11 +130,18 @@ namespace sample.windows
 
                 #region Delete credit card detail
 
+                Console.WriteLine("Deleting credit detail...");
+
                 userCreditDetailManager.Delete(userCreditDetail);
 
                 #endregion
 
                 #region Delete user
+
+                Console.WriteLine("Deleting user...");
+
+                userManager.Delete(user);
+
                 #endregion
             }
             catch (Exception ex)

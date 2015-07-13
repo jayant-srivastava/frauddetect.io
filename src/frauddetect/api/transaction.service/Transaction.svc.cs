@@ -162,7 +162,7 @@ namespace frauddetect.api.transaction.service
                 if (userCreditDetail.Balance - transactionInput.Amount < 0) { statusCode = StatusCode.InsufficientFunds; throw new Exception("Insufficent funds."); }
 
                 userCreditDetail.Balance = userCreditDetail.Balance - transactionInput.Amount;
-                //todo: update record
+                userCreditDetailManager.Update(userCreditDetail);
 
                 #endregion
 

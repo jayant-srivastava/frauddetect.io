@@ -35,6 +35,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -44,12 +45,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="convertor\Convertor.cs" />
+    <Compile Include="email\EmailManager.cs" />
     <Compile Include="logging\LogManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="web\WebManager.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="email\" />
     <Folder Include="sms\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

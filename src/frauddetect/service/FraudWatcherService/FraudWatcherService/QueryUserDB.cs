@@ -57,19 +57,35 @@ namespace frauddetect.service.fraudwatcher
             FileSystemWatcher watcher = new FileSystemWatcher();
             watcher.Path = ConfigurationManager.AppSettings["SplunkRecordFolderPath"];
             watcher.NotifyFilter = NotifyFilters.LastWrite;
-            watcher.Filter = "*.*";
+            watcher.Filter = "*.csv.gz";
+            watcher.IncludeSubdirectories = true;
             watcher.Changed += new FileSystemEventHandler(OnChanged);
             watcher.EnableRaisingEvents = true;
         }
 
         public void OnChanged(object sender, FileSystemEventArgs inArgs)
         {
+            //System.Threading.Thread.Sleep(2000);
             try
             {
                 log.Debug("New record found");
                 //Read the file contents
                 string fileName = inArgs.Name;
                 string fullFilePath = inArgs.FullPath;
+                log.Debug("File name and path : " + fileName + " - " + fullFilePath);
+                try
+                {
+                    FileInfo info = new FileInfo(fullFilePath);
+                    log.Debug("File extension : " + info.Extension + " and file Name : " + info.Name);
+                    if (info.Name.EndsWith("results.sra.csv.gz"))
+                    {
+                        return;
+                    }
+                }
+                catch (Exception e)
+                {
+                    log.Debug(e.StackTrace);
+                }
                 string accountNumber = GetUserAccountFromLog(fullFilePath);
                 log.Debug(fileName + " - " + fullFilePath + " - " + accountNumber);
 
@@ -152,8 +168,8 @@ namespace frauddetect.service.fraudwatcher
                 }
                 reader.Close();
 
-                log.Debug("Search result : " + listB[2].ToString());
-                return listB[2];
+                log.Debug("Search result : " + listB[7].ToString());
+                return listB[7];
             }
             catch (Exception ex)
             {

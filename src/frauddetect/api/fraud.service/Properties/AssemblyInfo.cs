@@ -1,15 +1,15 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("frauddetect.api.transaction.service")]
+[assembly: AssemblyTitle("frauddetect.api.fraud.service")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("frauddetect.io")]
-[assembly: AssemblyProduct("transaction.service")]
+[assembly: AssemblyProduct("frauddetect")]
 [assembly: AssemblyCopyright("Copyright © frauddetect.io 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("3e50efbe-c1f0-44da-9ec1-533a398d7b22")]
+[assembly: Guid("d7cf078b-5790-49b3-9610-4794d639a32d")]
 
 // Version information for an assembly consists of the following four values:
 //

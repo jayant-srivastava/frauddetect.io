@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using transaction.service;
 using frauddetect.common.core.web;
+using frauddetect.api.transaction.service;
 
 namespace frauddetect.unittests.api
 {
@@ -18,7 +18,7 @@ namespace frauddetect.unittests.api
             {
                 TransactionInput input = new TransactionInput()
                 {
-                    Account = "XXXX-XXXXX",
+                    AccountNumber = "XXXX-XXXXX",
                     Amount = 2.0,
                     Store = "Macys"
                 };

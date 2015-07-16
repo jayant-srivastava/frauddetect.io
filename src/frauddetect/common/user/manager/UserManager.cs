@@ -26,7 +26,7 @@ namespace frauddetect.common.user.manager
 
         public void Initialize(string mongoDB)
         {
-            if (string.IsNullOrWhiteSpace(mongoDB)) { throw new ArgumentException("Mongo database connection string is empty."); }
+            if (string.IsNullOrWhiteSpace(mongoDB)) { throw new ArgumentException("Mongo database connection string is blank."); }
 
             UserCollection = new MongoClient(mongoDB).GetServer().GetDatabase(UserDb).GetCollection<User>(CollectionName);
             Initialized = true;
@@ -37,7 +37,7 @@ namespace frauddetect.common.user.manager
             IsInitialized();
 
             if (user == null) { throw new ArgumentNullException("User input object is null."); }
-            if (string.IsNullOrWhiteSpace(user.SSN)) { throw new ArgumentException("User SSN is empty."); }
+            if (string.IsNullOrWhiteSpace(user.SSN)) { throw new ArgumentException("User SSN is blank."); }
 
             long count = UserCollection.Find(Query<User>.EQ(u => u.SSN, user.SSN)).Count();
             if (count > 0) { throw new Exception("User already exists."); }
@@ -54,7 +54,7 @@ namespace frauddetect.common.user.manager
 
             if (user == null) { throw new ArgumentNullException("User input object is null."); }
             if (user.ID == null) { throw new ArgumentException("User Id is null."); }
-            if (string.IsNullOrWhiteSpace(user.SSN)) { throw new ArgumentException("User SSN is empty."); }
+            if (string.IsNullOrWhiteSpace(user.SSN)) { throw new ArgumentException("User SSN is blank."); }
 
             long count = UserCollection.Find(Query.And(Query<User>.EQ(u => u.SSN, user.SSN), Query<User>.EQ(u => u.ID, user.ID))).Count();
             if (count == 0) { throw new Exception("User doesn't exists."); }
@@ -71,10 +71,10 @@ namespace frauddetect.common.user.manager
 
             if (user == null) { throw new ArgumentNullException("User input object is null."); }
             if (user.ID == null) { throw new ArgumentException("User Id is null."); }
-            if (string.IsNullOrWhiteSpace(user.SSN)) { throw new ArgumentException("User SSN is empty."); }
+            if (string.IsNullOrWhiteSpace(user.SSN)) { throw new ArgumentException("User SSN is blank."); }
 
             WriteConcernResult result = UserCollection.Remove(Query.And(Query<User>.EQ(u => u.SSN, user.SSN), Query<User>.EQ(u => u.ID, user.ID)));
-            if (result != null && !result.Ok) { throw new Exception("Failed to update user record."); }
+            if (result != null && !result.Ok) { throw new Exception("Failed to detail user record."); }
 
             return;
         }

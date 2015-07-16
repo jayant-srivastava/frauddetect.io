@@ -1,4 +1,5 @@
-﻿using frauddetect.common.core.logging;
+﻿using frauddetect.api.transaction.service;
+using frauddetect.common.core.logging;
 using frauddetect.common.core.web;
 using frauddetect.common.user;
 using frauddetect.common.user.manager;
@@ -13,7 +14,6 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using transaction.service;
 
 namespace sample.windows
 {
@@ -40,9 +40,10 @@ namespace sample.windows
 
                 Console.WriteLine("Creating user...");
 
-                User user1 = new User
+                User user = new User
                 {
                     FirstName = firstName,
+                    MiddleName = string.Empty,
                     LastName = lastName,
                     Active = true,
                     SSN = SSN,
@@ -53,8 +54,15 @@ namespace sample.windows
                 UserManager userManager = new UserManager();
                 userManager.Initialize(ConfigurationManager.AppSettings["mongo"]);
 
-                ObjectId id = userManager.Insert(user1);
+                ObjectId id = userManager.Insert(user);
                 Console.WriteLine("Created user with Id: " + id);
+
+                #endregion
+
+                #region Update User
+
+                user.BillingZipCode = "94560";
+                userManager.Update(user);
 
                 #endregion
 
@@ -84,7 +92,14 @@ namespace sample.windows
 
                 #endregion
 
-                #region Simulate transaction 
+                #region Update credit card detail
+
+                userCreditDetail.Balance = 1000;
+                userCreditDetailManager.Update(userCreditDetail);
+
+                #endregion
+
+                #region Simulate transaction
 
                 Console.WriteLine("Simulating transaction...");
 
@@ -92,11 +107,13 @@ namespace sample.windows
                 {
                     AccountName = firstName + " " + lastName,
                     AccountNumber = accountNumber,
-                    Amount = 2.0,
+                    Amount = 20.0,
                     Store = "Macys",
                     CVV = 1111,
                     ExpiryMonth = 12,
                     ExpiryYear = 2016,
+                    Latitude = 37.773685,
+                    Longitude = -122.421034,
                 };
 
                 TransactionOutput output = new WebManager().POSTMethod<TransactionInput, TransactionOutput>(string.Format(@"http://{0}/services/v1/transaction.service/Transaction.svc/authorize", ConfigurationManager.AppSettings["webservice"]), input);
@@ -108,6 +125,22 @@ namespace sample.windows
                 {
                     Console.WriteLine("Transaction failed.");
                 }
+
+                #endregion
+
+                #region Delete credit card detail
+
+                Console.WriteLine("Deleting credit detail...");
+
+                userCreditDetailManager.Delete(userCreditDetail);
+
+                #endregion
+
+                #region Delete user
+
+                Console.WriteLine("Deleting user...");
+
+                userManager.Delete(user);
 
                 #endregion
             }

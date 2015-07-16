@@ -47,13 +47,40 @@ namespace frauddetect.common.user.manager
             return;
         }
 
+        public void Update(UserCreditDetail userCreditDetail)
+        {
+            IsInitialized();
+
+            if (userCreditDetail == null) { throw new ArgumentNullException("User credit detail object is null."); }
+            if (string.IsNullOrWhiteSpace(userCreditDetail.Account)) { throw new ArgumentNullException("Account number is blank."); }
+
+            long count = UserCreditDetailsCollection.Find(Query<UserCreditDetail>.EQ(u => u.Account, userCreditDetail.Account)).Count(); 
+            if (count == 0) { throw new Exception("Account doesn't exist."); }
+
+            WriteConcernResult result = UserCreditDetailsCollection.Save(userCreditDetail);
+            if (result != null && !result.Ok) { throw new Exception("Failed to update user credit detail record."); }
+        }
+
+        public void Delete(UserCreditDetail userCreditDetail)
+        {
+            IsInitialized();
+
+            if (userCreditDetail == null) { throw new ArgumentNullException("User credit detail object is null."); }
+            if (string.IsNullOrWhiteSpace(userCreditDetail.Account)) { throw new ArgumentNullException("Account number is blank."); }
+
+            WriteConcernResult result = UserCreditDetailsCollection.Remove(Query<UserCreditDetail>.EQ(u => u.Account, userCreditDetail.Account));
+            if (result != null && !result.Ok) { throw new Exception("Failed to delete user credit detail record."); }
+
+            return;
+        }
+
         public UserCreditDetail GetByAccount(string account)
         {
             IsInitialized();
 
             if (string.IsNullOrWhiteSpace(account)) { throw new ArgumentNullException("Account number is blank."); }
 
-            List<UserCreditDetail> userCreditDetails = UserCreditDetailsCollection.Find(Query<UserCreditDetail>.EQ(u => u.Account, account)).SetFields(Fields.Exclude("_id")).ToList();
+            List<UserCreditDetail> userCreditDetails = UserCreditDetailsCollection.Find(Query<UserCreditDetail>.EQ(u => u.Account, account)).ToList();
             if (userCreditDetails == null || userCreditDetails.Count == 0) { return null; }
 
             return userCreditDetails[0];

@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="frauddetect.api.transaction.service">
+      <HintPath>..\..\..\..\binaries\frauddetect.api.transaction.service.dll</HintPath>
+    </Reference>
     <Reference Include="frauddetect.common.core">
       <HintPath>..\..\common\core\obj\Debug\frauddetect.common.core.dll</HintPath>
     </Reference>

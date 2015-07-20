@@ -24,7 +24,7 @@ namespace Test1
             string fileName = @"C:\SplunkRecords\test.csv";
 
             using (Stream fd = File.Create(fileName))
-            using (Stream fs = File.OpenRead(@"C:\SplunkRecordsZipped\tmp_0.csv.gz"))
+            using (Stream fs = File.OpenRead(@"C:\SplunkRecordsZipped\results.csv.gz"))
             using (Stream csStream = new GZipStream(fs, CompressionMode.Decompress))
             {
                 byte[] buffer = new byte[10240];
@@ -38,25 +38,49 @@ namespace Test1
             var reader = new StreamReader(File.OpenRead(fileName));
             List<string> listA = new List<string>();
             List<string> listB = new List<string>();
+
+            int counter = 0;
+            int cellValues = 0;
+
+            Dictionary<string, string> dictionaryA = new Dictionary<string, string>();
             while (!reader.EndOfStream)
             {
                 var line1 = reader.ReadLine();
+                counter++;
                 var values1 = line1.Split(',');
 
-                listA.AddRange(values1);
+
+                //listA.AddRange(values1);
 
                 var line2 = reader.ReadLine();
+                counter++;
                 var values2 = line2.Split(',');
+                //listB.AddRange(values2);
 
-                listB.AddRange(values2);
 
+                foreach (var val in values1)
+                {
+                    dictionaryA[val] = values2[cellValues];
+                    cellValues++;
+                }
+
+                if (counter > 2)
+                    break;
             }
+            reader.Close();
 
-            string searchTerm = listB[7];
+            string searchTerm;
 
-            string userAccountNumber = string.Empty;
-            List<string> contents = new List<string>(searchTerm.Split(' '));
-            userAccountNumber = contents.Find(s => (s.Length == 16) && (s.StartsWith("1111")));
+            if (dictionaryA.ContainsKey("AccountNumber"))
+                searchTerm = dictionaryA["AccountNumber"];
+            else
+                searchTerm = string.Empty;
+
+            //string searchTerm = listB[7];
+
+            //string userAccountNumber = string.Empty;
+            //List<string> contents = new List<string>(searchTerm.Split(' '));
+            //userAccountNumber = contents.Find(s => (s.Length == 16) && (s.StartsWith("1111")));
 
         }
     }

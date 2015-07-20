@@ -30,18 +30,14 @@ namespace frauddetect.service.fraudwatcher
         /// <summary>
         ///     Data from Splunk log
         /// </summary>
-        public string GetUserAccountFromLog(string fullFilePath)
+        public string GetUserAccountFromLog(string fullFilePath, ref string transactionAmount)
         {
             try
             {
                 string csvPath = ConvertGZ2CSV(fullFilePath);
-                string searchTerm = ExtractSearchResultFromCSV(csvPath);
 
                 //Search for Account Number
-                string userAccountNumber = string.Empty;
-                List<string> contents = new List<string>(searchTerm.Split(' '));
-                log.Debug("Find the account number : " + contents);
-                userAccountNumber = contents.Find(s => (s.Length == 16) && (s.StartsWith("1111")));
+                string userAccountNumber = ExtractSearchResultFromCSV(csvPath, ref transactionAmount); ;
 
                 return userAccountNumber;
             }
@@ -61,11 +57,11 @@ namespace frauddetect.service.fraudwatcher
             watcher.IncludeSubdirectories = true;
             watcher.Changed += new FileSystemEventHandler(OnChanged);
             watcher.EnableRaisingEvents = true;
+            log.Debug("Exiting WatchForNewRecords");
         }
 
         public void OnChanged(object sender, FileSystemEventArgs inArgs)
         {
-            //System.Threading.Thread.Sleep(2000);
             try
             {
                 log.Debug("New record found");
@@ -76,27 +72,36 @@ namespace frauddetect.service.fraudwatcher
                 try
                 {
                     FileInfo info = new FileInfo(fullFilePath);
-                    log.Debug("File extension : " + info.Extension + " and file Name : " + info.Name);
+                    
                     if (info.Name.EndsWith("results.sra.csv.gz"))
                     {
+                        log.Debug("File extension : " + info.Extension + " and file Name : " + info.Name + " - Records ignored");
                         return;
+                    }
+                    else
+                    {
+                        log.Debug("File extension : " + info.Extension + " and file Name : " + info.Name);
                     }
                 }
                 catch (Exception e)
                 {
                     log.Debug(e.StackTrace);
                 }
-                string accountNumber = GetUserAccountFromLog(fullFilePath);
+                string transactionAmount = string.Empty;
+                string accountNumber = GetUserAccountFromLog(fullFilePath, ref transactionAmount);
                 log.Debug(fileName + " - " + fullFilePath + " - " + accountNumber);
 
                 if (accountNumber == string.Empty)
                     return;
 
                 //Lookup MongoDB User database for the account number
+           
                 UserCreditDetailManager ucdManager = new UserCreditDetailManager();
+                ucdManager.Initialize(ConfigurationManager.AppSettings["MongoDB_URL"]);
                 UserCreditDetail ucd = ucdManager.GetByAccount(accountNumber);
 
                 UserManager userManager = new UserManager();
+                userManager.Initialize(ConfigurationManager.AppSettings["MongoDB_URL"]);
                 ObjectId userId;
                 User user = null;
                 if (ObjectId.TryParse(ucd.PrimaryUserId, out userId))
@@ -108,13 +113,40 @@ namespace frauddetect.service.fraudwatcher
                 //Send email/text to the User
                 if (user != null)
                 {
-                    EmailManager mgr = new EmailManager("jsy.ventures@gmail.com", user.EmailAddress, "Potential security issue", "Please check your credit card");
+                    //Send email to the user
+                    EmailManager mgr = new EmailManager("xxxxxxx@gmail.com", user.EmailAddress, "Potential Credit Card Fraud", "Please check your credit card records urgently : Credit transaction of USD : " + transactionAmount);
+                    mgr.MailServer = "smtp.gmail.com";
+                    mgr.SmtpPort = 587;
+                    mgr.EnableEmailSSL = true;
+                    mgr.EmailAccountCredential = new System.Net.NetworkCredential("xxxxxxxx@gmail.com", "xxxxxxx");
                     mgr.Send();
                     log.Debug("Message sent to user : " + user.EmailAddress);
+
+                    //Send also a text message to the user
+                    if (user.Phone != string.Empty) 
+                    {
+                        EmailManager txtManager = null;
+                        if (transactionAmount != string.Empty)
+                        {
+                            txtManager = new EmailManager("xxxxxxx@gmail.com", user.Phone, "Potential Credit Card Fraud", "Please check your credit card records urgently : Credit transaction of USD : " + transactionAmount);
+                        }
+                        else
+                        {
+                            txtManager = new EmailManager("xxxxxxxx@gmail.com", user.Phone, "Potential Credit Card Fraud", "Please check your credit card records urgently");
+                        }
+                        txtManager.MailServer = "smtp.gmail.com";
+                        txtManager.SmtpPort = 587;
+                        txtManager.EnableEmailSSL = true;
+                        txtManager.EmailAccountCredential = new System.Net.NetworkCredential("xxxxxxx@gmail.com", "xxxxxxx");
+                        txtManager.Send();
+                        log.Debug("Message sent to user : " + user.Phone);
+
+                    }
                 }
             }
             catch (Exception ex)
             {
+                log.Error(ex.Message);
                 log.Debug("Error in OnChanged : " + ex.StackTrace);
             }
         }
@@ -147,29 +179,62 @@ namespace frauddetect.service.fraudwatcher
             }
         }
 
-        public string ExtractSearchResultFromCSV(string csvFileName)
+        public string ExtractSearchResultFromCSV(string csvFileName, ref string transactionAmount)
         {
             try
             {
+                int counter = 0;
+                int cellValues = 0;
                 var reader = new StreamReader(File.OpenRead(csvFileName));
-                List<string> listA = new List<string>();
-                List<string> listB = new List<string>();
+                Dictionary<string, string> dictionaryA = new Dictionary<string, string>();
+
                 while (!reader.EndOfStream)
                 {
                     var line1 = reader.ReadLine();
+                    counter++;
                     var values1 = line1.Split(',');
 
-                    listA.AddRange(values1);
-
                     var line2 = reader.ReadLine();
+                    counter++;
                     var values2 = line2.Split(',');
+                  
+                    
+                    foreach (var val in values1)
+                    {
+                        dictionaryA[val] = values2[cellValues];
+                        cellValues++;
+                    }
 
-                    listB.AddRange(values2);
+                    if (counter > 2)
+                        break;
                 }
                 reader.Close();
 
-                log.Debug("Search result : " + listB[7].ToString());
-                return listB[7];
+                string searchTerm, totalAmount;
+
+                if (dictionaryA.ContainsKey("AccountNumber"))
+                    searchTerm = dictionaryA["AccountNumber"];
+                else
+                    searchTerm = string.Empty;
+
+                if (dictionaryA.ContainsKey("TotalAmount"))
+                    totalAmount = dictionaryA["TotalAmount"];
+                else
+                    totalAmount = string.Empty;
+
+                if (totalAmount == string.Empty)
+                {
+                    if (dictionaryA.ContainsKey("Amount"))
+                        totalAmount = dictionaryA["Amount"];
+                    else
+                        totalAmount = string.Empty;
+                }
+
+                log.Debug("TotalAmount : " + totalAmount);
+
+                transactionAmount = totalAmount;
+
+                return searchTerm;
             }
             catch (Exception ex)
             {
